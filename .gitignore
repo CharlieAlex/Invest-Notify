@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+uv.lock
+logs/*.log
+data/raw/*.csv
+data/curated/*.csv
+data/plots/*.png
