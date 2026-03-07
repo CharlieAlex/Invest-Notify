@@ -9,3 +9,4 @@ data/raw/*.csv
 data/curated/*.csv
 data/plots/*.png
 **/.DS_Store
+config/stocks.yaml
