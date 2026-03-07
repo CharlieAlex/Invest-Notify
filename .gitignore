@@ -6,6 +6,7 @@ __pycache__/
 uv.lock
 logs/*.log
 data/raw/*.csv
+data/raw/*.sqlite
 data/curated/*.csv
 data/plots/*.png
 **/.DS_Store

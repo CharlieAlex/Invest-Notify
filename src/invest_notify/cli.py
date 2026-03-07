@@ -14,6 +14,7 @@ from invest_notify.data_source.us_stock import fetch_us_recent_closes
 from invest_notify.scheduler import run_interval_job
 from invest_notify.settings import load_app_settings, load_stock_settings
 from invest_notify.storage.reader import filter_since, read_prices
+from invest_notify.storage.sqlite_store import upsert_records
 from invest_notify.storage.writer import replace_records, save_curated
 from invest_notify.utils.logger import setup_logger
 from invest_notify.utils.timeutil import now_utc, three_months_ago
@@ -44,6 +45,7 @@ def run_fetch() -> None:
         records.extend(fetch_us_recent_closes(stocks.nasdaq_stock, lookback_days=90, use_mock=True))
 
     replace_records(records, app.data.raw_file)
+    upserted = upsert_records(records, app.data.sqlite_file)
 
     total_stocks = (
         len(stocks.twse_stock)
@@ -52,10 +54,11 @@ def run_fetch() -> None:
         + len(stocks.nasdaq_stock)
     )
     LOGGER.info(
-        "Fetched %d close records for %d stocks from provider=%s",
+        "Fetched %d close records for %d stocks from provider=%s (sqlite_upsert=%d)",
         len(records),
         total_stocks,
         provider,
+        upserted,
     )
 
 

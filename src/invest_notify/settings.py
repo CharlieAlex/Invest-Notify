@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, ValidationError, model_validator
 
 class DataSettings(BaseModel):
     raw_file: Path
+    sqlite_file: Path
     curated_file: Path
     plot_dir: Path
 

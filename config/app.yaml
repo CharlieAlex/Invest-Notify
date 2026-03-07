@@ -3,6 +3,7 @@ log_level: INFO
 
 data:
   raw_file: data/raw/prices_raw.csv
+  sqlite_file: data/raw/prices_raw.sqlite
   curated_file: data/curated/prices_curated.csv
   plot_dir: data/plots
 
