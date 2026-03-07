@@ -200,8 +200,31 @@ def plot_market_grid(
             ax.set_axis_off()
             continue
 
+        sns.scatterplot(data=symbol_df, x="ts", y="close", ax=ax, color="#1f77b4", s=18, alpha=0.75)
         sns.lineplot(data=symbol_df, x="ts", y="close", ax=ax, color="#1f77b4", linewidth=1.6)
-        ax.set_title(symbol)
+
+        latest_row = symbol_df.iloc[-1]
+        latest_ts = latest_row["ts"]
+        latest_close = float(latest_row["close"])
+
+        cutoff_20d = latest_ts - timedelta(days=20)
+        recent_20 = symbol_df[symbol_df["ts"] >= cutoff_20d].copy()
+        if recent_20.empty:
+            recent_20 = symbol_df.tail(20).copy()
+
+        low_idx = recent_20["close"].idxmin()
+        low_row = recent_20.loc[low_idx]
+        low_ts = low_row["ts"]
+        low_close = float(low_row["close"])
+
+        is_latest_20d_low = latest_close <= low_close
+        latest_color = "#d62728" if is_latest_20d_low else "#2ca02c"
+
+        ax.scatter([low_ts], [low_close], color="#ff7f0e", s=70, zorder=6)
+        ax.scatter([latest_ts], [latest_close], color=latest_color, s=85, zorder=7)
+
+        low_flag = "LOW20" if is_latest_20d_low else ""
+        ax.set_title(f"{symbol} {low_flag}".strip())
         ax.set_xlabel("Date")
         ax.set_ylabel("Close")
         ax.tick_params(axis="x", rotation=30)
