@@ -5,6 +5,7 @@
 - 支援上市（TWSE）、上櫃（TPEx）、興櫃（ESB）與美股（NASDAQ ticker）
 - 儲存價格資料到本地 CSV（覆蓋）與 SQLite（upsert 累積）
 - 輸出單檔個股圖與市場分組子圖（`n x 3`）
+- 產生每月 Markdown 日報表（每日一個表格）
 - 繪製近 3 個月趨勢圖（seaborn）
 
 ## 快速開始

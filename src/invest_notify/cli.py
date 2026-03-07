@@ -11,6 +11,7 @@ from invest_notify.data_source.tw_stock import (
     fetch_twse_recent_closes,
 )
 from invest_notify.data_source.us_stock import fetch_us_recent_closes
+from invest_notify.reporting.daily_table import write_daily_snapshot_table
 from invest_notify.scheduler import run_interval_job
 from invest_notify.settings import load_app_settings, load_stock_settings
 from invest_notify.storage.reader import filter_since, read_prices
@@ -109,6 +110,13 @@ def run_plot() -> None:
     for symbol in stocks.nasdaq_stock:
         market_map[symbol] = "nasdaq"
 
+    table_path = write_daily_snapshot_table(
+        trend_df=trend_df,
+        market_map=market_map,
+        table_dir=app.data.table_dir,
+    )
+    if table_path is not None:
+        LOGGER.info("Daily table updated: %s", table_path)
 
 
 def run_once() -> None:

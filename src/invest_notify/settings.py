@@ -11,6 +11,7 @@ class DataSettings(BaseModel):
     sqlite_file: Path
     curated_file: Path
     plot_dir: Path
+    table_dir: Path
 
 
 class SourceSettings(BaseModel):

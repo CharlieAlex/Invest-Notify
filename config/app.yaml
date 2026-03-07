@@ -6,6 +6,7 @@ data:
   sqlite_file: data/raw/prices_raw.sqlite
   curated_file: data/curated/prices_curated.csv
   plot_dir: data/plots
+  table_dir: data/tables
 
 source:
   provider: twse   # mock | twse | live
