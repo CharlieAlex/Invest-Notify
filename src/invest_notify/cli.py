@@ -4,7 +4,13 @@ import argparse
 import logging
 
 from invest_notify.analysis.trend import build_trend_frame
-from invest_notify.data_source.tw_stock import PriceProvider
+from invest_notify.data_source.tw_stock import (
+    fetch_esb_recent_closes,
+    fetch_mock_recent_closes,
+    fetch_tpex_recent_closes,
+    fetch_twse_recent_closes,
+)
+from invest_notify.data_source.us_stock import fetch_us_recent_closes
 from invest_notify.scheduler import run_interval_job
 from invest_notify.settings import load_app_settings, load_stock_settings
 from invest_notify.storage.reader import filter_since, read_prices
@@ -20,15 +26,36 @@ def run_fetch() -> None:
     app = load_app_settings()
     stocks = load_stock_settings()
 
-    provider = PriceProvider(provider=app.source.provider)
-    records = provider.fetch_recent_closes(stocks.stocks, lookback_days=90)
+    provider = app.source.provider
+    use_live = provider in {"twse", "live"}
+
+    records = []
+    if use_live:
+        records.extend(fetch_twse_recent_closes(stocks.twse_stock, lookback_days=90))
+        records.extend(fetch_tpex_recent_closes(stocks.tpex_stock, lookback_days=90))
+        records.extend(fetch_esb_recent_closes(stocks.esb_stock, lookback_days=90))
+        records.extend(
+            fetch_us_recent_closes(stocks.nasdaq_stock, lookback_days=90, use_mock=False)
+        )
+    else:
+        records.extend(fetch_mock_recent_closes(stocks.twse_stock, lookback_days=90))
+        records.extend(fetch_mock_recent_closes(stocks.tpex_stock, lookback_days=90))
+        records.extend(fetch_mock_recent_closes(stocks.esb_stock, lookback_days=90))
+        records.extend(fetch_us_recent_closes(stocks.nasdaq_stock, lookback_days=90, use_mock=True))
+
     replace_records(records, app.data.raw_file)
 
+    total_stocks = (
+        len(stocks.twse_stock)
+        + len(stocks.tpex_stock)
+        + len(stocks.esb_stock)
+        + len(stocks.nasdaq_stock)
+    )
     LOGGER.info(
         "Fetched %d close records for %d stocks from provider=%s",
         len(records),
-        len(stocks.stocks),
-        app.source.provider,
+        total_stocks,
+        provider,
     )
 
 

@@ -1,7 +1,8 @@
 # Invest Notify
 
-本地執行的台股追蹤工具：
-- 定期抓取指定股票價格（可切換 `mock` / `twse`）
+本地執行的股票追蹤工具：
+- 定期抓取指定股票價格（可切換 `mock` / `twse` / `live`）
+- 支援上市（TWSE）、上櫃（TPEx）、興櫃（ESB）與美股（NASDAQ ticker）
 - 儲存價格資料到本地 CSV
 - 繪製近 3 個月趨勢圖（seaborn）
 
@@ -12,6 +13,20 @@ make init
 cp config/stocks.example.yaml config/stocks.yaml
 make fetch
 make plot
+```
+
+## stocks.yaml 範例
+
+```yaml
+twse_stock:
+  - "0050"
+  - "0056"
+tpex_stock:
+  - "6462"
+esb_stock:
+  - "5297"
+nasdaq_stock:
+  - "QQQ"
 ```
 
 ## 指令

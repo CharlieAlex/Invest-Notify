@@ -1,0 +1,13 @@
+twse_stock:
+  - "0050"
+  - "2330"
+
+tpex_stock:
+  - "6462"
+
+esb_stock:
+  - "5297"
+
+nasdaq_stock:
+  - "QQQ"
+  - "SPY"

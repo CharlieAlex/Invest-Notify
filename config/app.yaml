@@ -7,7 +7,7 @@ data:
   plot_dir: data/plots
 
 source:
-  provider: twse   # mock | twse
+  provider: twse   # mock | twse | live
 
 scheduler:
   interval_minutes: 15
