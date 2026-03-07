@@ -17,7 +17,12 @@ def read_prices(raw_csv_path: Path) -> pd.DataFrame:
         df = df.rename(columns={"price": "close"})
 
     if "symbol" in df.columns:
-        df["symbol"] = df["symbol"].astype(str).str.zfill(4)
+        df["symbol"] = (
+            df["symbol"]
+            .astype(str)
+            .str.strip()
+            .apply(lambda x: x.zfill(4) if x.isdigit() and len(x) < 4 else x)
+        )
     if "ts" in df.columns:
         df["ts"] = pd.to_datetime(df["ts"], errors="coerce")
     if "close" in df.columns:

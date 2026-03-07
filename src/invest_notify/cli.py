@@ -18,7 +18,7 @@ from invest_notify.storage.sqlite_store import upsert_records
 from invest_notify.storage.writer import replace_records, save_curated
 from invest_notify.utils.logger import setup_logger
 from invest_notify.utils.timeutil import now_utc, three_months_ago
-from invest_notify.visualization.trend_plot import plot_price, plot_trends
+from invest_notify.visualization.trend_plot import plot_market_grid, plot_price, plot_trends
 
 LOGGER = logging.getLogger(__name__)
 
@@ -64,6 +64,7 @@ def run_fetch() -> None:
 
 def run_plot() -> None:
     app = load_app_settings()
+    stocks = load_stock_settings()
 
     raw_df = read_prices(app.data.raw_file)
     since = three_months_ago(now_utc())
@@ -80,6 +81,34 @@ def run_plot() -> None:
     for symbol in sorted(trend_df["symbol"].astype(str).unique().tolist()):
         symbol_path = plot_price(trend_df, symbol=symbol, output_dir=app.data.plot_dir)
         LOGGER.info("Per-stock plot generated: %s", symbol_path)
+
+    market_groups = {
+        "twse": stocks.twse_stock,
+        "tpex": stocks.tpex_stock,
+        "esb": stocks.esb_stock,
+        "nasdaq": stocks.nasdaq_stock,
+    }
+    for market_name, symbols in market_groups.items():
+        grid_path = plot_market_grid(
+            trend_df,
+            symbols=symbols,
+            market_name=market_name,
+            output_dir=app.data.plot_dir,
+            ncols=3,
+        )
+        if grid_path is not None:
+            LOGGER.info("Market grid generated: %s", grid_path)
+
+    market_map = {}
+    for symbol in stocks.twse_stock:
+        market_map[symbol] = "twse"
+    for symbol in stocks.tpex_stock:
+        market_map[symbol] = "tpex"
+    for symbol in stocks.esb_stock:
+        market_map[symbol] = "esb"
+    for symbol in stocks.nasdaq_stock:
+        market_map[symbol] = "nasdaq"
+
 
 
 def run_once() -> None:

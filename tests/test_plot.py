@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from invest_notify.visualization.trend_plot import plot_price, plot_trends
+from invest_notify.visualization.trend_plot import plot_market_grid, plot_price, plot_trends
 
 
 def test_plot_trends_generates_png(tmp_path: Path) -> None:
@@ -33,3 +33,19 @@ def test_plot_price_generates_single_stock_png(tmp_path: Path) -> None:
     output = plot_price(df, symbol="2330", output_dir=tmp_path)
     assert output.exists()
     assert output.name == "price_2330.png"
+
+
+def test_plot_market_grid_generates_png(tmp_path: Path) -> None:
+    dates = pd.bdate_range(start="2026-01-01", periods=12)
+    df = pd.DataFrame(
+        {
+            "symbol": ["0050"] * len(dates) + ["0056"] * len(dates),
+            "ts": list(dates) + list(dates),
+            "close": [50 + i for i in range(len(dates))] + [30 + i for i in range(len(dates))],
+        }
+    )
+    output = plot_market_grid(df, symbols=["0050", "0056"], market_name="twse", output_dir=tmp_path)
+
+    assert output is not None
+    assert output.exists()
+    assert output.name == "market_twse.png"

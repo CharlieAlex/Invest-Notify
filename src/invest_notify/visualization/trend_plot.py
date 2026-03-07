@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from datetime import timedelta
 from pathlib import Path
 
@@ -167,6 +168,50 @@ def plot_price(df: pd.DataFrame, symbol: str, output_dir: Path, days_back: int =
     ax.set_ylabel("Close")
     ax.grid(True, alpha=0.25)
     fig.autofmt_xdate()
+    fig.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    return output_path
+
+
+def plot_market_grid(
+    df: pd.DataFrame,
+    symbols: list[str],
+    market_name: str,
+    output_dir: Path,
+    ncols: int = 3,
+) -> Path | None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    market_symbols = [s for s in symbols if s in df["symbol"].astype(str).unique().tolist()]
+    if not market_symbols:
+        return None
+
+    nrows = max(1, math.ceil(len(market_symbols) / ncols))
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(18, 4.8 * nrows))
+    axes_list = list(axes.flatten()) if hasattr(axes, "flatten") else [axes]
+    sns.set_theme(style="whitegrid")
+
+    for idx, symbol in enumerate(market_symbols):
+        ax = axes_list[idx]
+        symbol_df = df[df["symbol"].astype(str) == symbol].copy()
+        symbol_df["ts"] = pd.to_datetime(symbol_df["ts"], errors="coerce")
+        symbol_df = symbol_df.dropna(subset=["ts", "close"]).sort_values("ts")
+        if symbol_df.empty:
+            ax.set_axis_off()
+            continue
+
+        sns.lineplot(data=symbol_df, x="ts", y="close", ax=ax, color="#1f77b4", linewidth=1.6)
+        ax.set_title(symbol)
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Close")
+        ax.tick_params(axis="x", rotation=30)
+
+    for idx in range(len(market_symbols), len(axes_list)):
+        axes_list[idx].set_axis_off()
+
+    fig.suptitle(f"{market_name.upper()} - 3M Close Price Grid", fontsize=16)
+    fig.tight_layout(rect=[0, 0, 1, 0.97])
+    output_path = output_dir / f"market_{market_name}.png"
     fig.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     return output_path
