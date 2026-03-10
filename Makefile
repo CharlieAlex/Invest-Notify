@@ -1,4 +1,4 @@
-PYTHON := uv run python
+PYTHON := ./.venv/bin/python
 
 .PHONY: init fetch plot run test lint format
 
