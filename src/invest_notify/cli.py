@@ -67,6 +67,8 @@ def run_plot() -> None:
     app = load_app_settings()
     stocks = load_stock_settings()
     name_map = load_stock_name_map()
+    low_days = app.window.low_days
+    high_days = app.window.high_days
 
     raw_df = read_prices(app.data.raw_file)
     since = three_months_ago(now_utc())
@@ -86,6 +88,8 @@ def run_plot() -> None:
             symbol=symbol,
             output_dir=app.data.plot_dir,
             name_map=name_map,
+            low_days=low_days,
+            high_days=high_days,
         )
         LOGGER.info("Per-stock plot generated: %s", symbol_path)
 
@@ -103,6 +107,8 @@ def run_plot() -> None:
             output_dir=app.data.plot_dir,
             ncols=3,
             name_map=name_map,
+            low_days=low_days,
+            high_days=high_days,
         )
         if grid_path is not None:
             LOGGER.info("Market grid generated: %s", grid_path)
@@ -122,6 +128,8 @@ def run_plot() -> None:
         market_map=market_map,
         table_dir=app.data.table_dir,
         name_map=name_map,
+        low_days=low_days,
+        high_days=high_days,
     )
     if table_path is not None:
         LOGGER.info("Daily table updated: %s", table_path)

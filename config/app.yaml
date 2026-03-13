@@ -13,3 +13,7 @@ source:
 
 scheduler:
   interval_minutes: 15
+
+window:
+  low_days: 20
+  high_days: 10

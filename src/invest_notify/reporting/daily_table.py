@@ -15,10 +15,10 @@ class DailyRow:
     symbol_name: str
     trade_date: datetime
     close: float
-    low_20d: float
-    high_20d: float
-    is_lower_or_equal_20d_low: bool
-    is_higher_or_equal_20d_high: bool
+    low_window: float
+    high_window: float
+    is_lower_or_equal_low_window: bool
+    is_higher_or_equal_high_window: bool
 
 
 def write_daily_snapshot_table(
@@ -26,11 +26,13 @@ def write_daily_snapshot_table(
     market_map: dict[str, str],
     table_dir: Path,
     name_map: dict[str, str] | None = None,
+    low_days: int = 20,
+    high_days: int = 20,
 ) -> Path | None:
     if trend_df.empty:
         return None
 
-    rows = _build_daily_rows(trend_df, market_map, name_map)
+    rows = _build_daily_rows(trend_df, market_map, name_map, low_days, high_days)
     if not rows:
         return None
 
@@ -38,7 +40,7 @@ def write_daily_snapshot_table(
     month_file = table_dir / f"{latest_date:%Y-%m}.md"
     table_dir.mkdir(parents=True, exist_ok=True)
 
-    section = _render_section(latest_date.strftime("%Y-%m-%d"), rows)
+    section = _render_section(latest_date.strftime("%Y-%m-%d"), rows, low_days, high_days)
     _upsert_section(month_file, latest_date.strftime("%Y-%m-%d"), section)
     return month_file
 
@@ -47,6 +49,8 @@ def _build_daily_rows(
     trend_df: pd.DataFrame,
     market_map: dict[str, str],
     name_map: dict[str, str] | None = None,
+    low_days: int = 20,
+    high_days: int = 20,
 ) -> list[DailyRow]:
     df = trend_df.copy()
     df["ts"] = pd.to_datetime(df["ts"], errors="coerce")
@@ -62,13 +66,18 @@ def _build_daily_rows(
         latest_ts = latest["ts"]
         latest_close = float(latest["close"])
 
-        window_start = latest_ts - timedelta(days=20)
-        recent = symbol_df[symbol_df["ts"] >= window_start]
-        if recent.empty:
-            recent = symbol_df.tail(20)
+        low_start = latest_ts - timedelta(days=low_days)
+        recent_low = symbol_df[symbol_df["ts"] >= low_start]
+        if recent_low.empty:
+            recent_low = symbol_df.tail(max(1, low_days))
 
-        low_20d = float(recent["close"].min())
-        high_20d = float(recent["close"].max())
+        high_start = latest_ts - timedelta(days=high_days)
+        recent_high = symbol_df[symbol_df["ts"] >= high_start]
+        if recent_high.empty:
+            recent_high = symbol_df.tail(max(1, high_days))
+
+        low_window = float(recent_low["close"].min())
+        high_window = float(recent_high["close"].max())
         rows.append(
             DailyRow(
                 market=market_map.get(symbol, "unknown"),
@@ -76,29 +85,29 @@ def _build_daily_rows(
                 symbol_name=name_map.get(symbol, "").strip() if name_map else "",
                 trade_date=latest_ts,
                 close=latest_close,
-                low_20d=low_20d,
-                high_20d=high_20d,
-                is_lower_or_equal_20d_low=latest_close <= low_20d,
-                is_higher_or_equal_20d_high=latest_close >= high_20d,
+                low_window=low_window,
+                high_window=high_window,
+                is_lower_or_equal_low_window=latest_close <= low_window,
+                is_higher_or_equal_high_window=latest_close >= high_window,
             )
         )
 
     return rows
 
 
-def _render_section(date_text: str, rows: list[DailyRow]) -> str:
+def _render_section(date_text: str, rows: list[DailyRow], low_days: int, high_days: int) -> str:
     header = [
         f"## {date_text}",
         "",
-        "| 市場 | 股票 | 股票名稱 | 當天收盤價 | 20天最低價 | 20天最高價 | 建議賣出 | 建議買入 |",
+        f"| 市場 | 股票 | 股票名稱 | 當天收盤價 | {low_days}天最低價 | {high_days}天最高價 | 建議賣出 | 建議買入 |",  # noqa: E501
         "|---|---|---|---:|---:|---:|:---:|:---:|",
     ]
     body = []
     for row in rows:
-        sell_flag = "✅" if row.is_lower_or_equal_20d_low else ""
-        buy_flag = "✅" if row.is_higher_or_equal_20d_high else ""
+        sell_flag = "✅" if row.is_lower_or_equal_low_window else ""
+        buy_flag = "✅" if row.is_higher_or_equal_high_window else ""
         body.append(
-            f"| {row.market} | {row.symbol} | {row.symbol_name} | {row.close:.2f} | {row.low_20d:.2f} | {row.high_20d:.2f} | {sell_flag} | {buy_flag} |"  # noqa: E501
+            f"| {row.market} | {row.symbol} | {row.symbol_name} | {row.close:.2f} | {row.low_window:.2f} | {row.high_window:.2f} | {sell_flag} | {buy_flag} |"  # noqa: E501
         )
     return "\n".join(header + body) + "\n"
 

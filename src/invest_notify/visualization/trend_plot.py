@@ -64,6 +64,8 @@ def plot_price(
     output_dir: Path,
     days_back: int = 60,
     name_map: dict[str, str] | None = None,
+    low_days: int = 20,
+    high_days: int = 20,
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"price_{symbol}.png"
@@ -91,20 +93,25 @@ def plot_price(
     latest_date = latest_row["ts"]
     latest_close = float(latest_row["close"])
 
-    cutoff_date = latest_date - timedelta(days=20)
-    ax.axvline(cutoff_date, color="#6c757d", linestyle="--", linewidth=1.4)
+    low_cutoff = latest_date - timedelta(days=low_days)
+    ax.axvline(low_cutoff, color="#6c757d", linestyle="--", linewidth=1.4)
 
-    recent_20_df = symbol_df[symbol_df["ts"] >= cutoff_date].copy()
-    if recent_20_df.empty:
-        recent_20_df = symbol_df.tail(20).copy()
+    recent_low_df = symbol_df[symbol_df["ts"] >= low_cutoff].copy()
+    if recent_low_df.empty:
+        recent_low_df = symbol_df.tail(max(1, low_days)).copy()
 
-    low_idx = recent_20_df["close"].idxmin()
-    low_row = recent_20_df.loc[low_idx]
+    low_idx = recent_low_df["close"].idxmin()
+    low_row = recent_low_df.loc[low_idx]
     low_date = low_row["ts"]
     low_close = float(low_row["close"])
 
-    high_idx = recent_20_df["close"].idxmax()
-    high_row = recent_20_df.loc[high_idx]
+    high_cutoff = latest_date - timedelta(days=high_days)
+    recent_high_df = symbol_df[symbol_df["ts"] >= high_cutoff].copy()
+    if recent_high_df.empty:
+        recent_high_df = symbol_df.tail(max(1, high_days)).copy()
+
+    high_idx = recent_high_df["close"].idxmax()
+    high_row = recent_high_df.loc[high_idx]
     high_date = high_row["ts"]
     high_close = float(high_row["close"])
 
@@ -113,7 +120,7 @@ def plot_price(
     ax.scatter([latest_date], [latest_close], color="#2ca02c", s=55, zorder=5)
 
     # ax.annotate(
-    #     f"20D Low: {low_date:%Y-%m-%d}\nClose: {low_close:.2f}",
+    #     f"{low_days}D Low: {low_date:%Y-%m-%d}\nClose: {low_close:.2f}",
     #     xy=(low_date, low_close),
     #     xytext=(12, 12),
     #     textcoords="offset points",
@@ -173,13 +180,21 @@ def plot_price(
             current_y += box_height_fraction + y_padding
 
     # 使用方式
-    lp, hp, np = low_close, high_close, latest_close
     _add_corner_annotations(
         ax,
         [
-            {"text": f"20D Low: {low_date:%Y-%m-%d}\nClose: {lp:.2f}", "color": "#d62728"},
-            {"text": f"20D High: {high_date:%Y-%m-%d}\nClose: {hp:.2f}", "color": "#9467bd"},
-            {"text": f"Latest: {latest_date:%Y-%m-%d}\nClose: {np:.2f}", "color": "#2ca02c"},
+            {
+                "text": f"{low_days}D Low: {low_date:%Y-%m-%d}\nClose: {low_close:.2f}",
+                "color": "#d62728",
+            },
+            {
+                "text": f"{high_days}D High: {high_date:%Y-%m-%d}\nClose: {high_close:.2f}",
+                "color": "#9467bd",
+            },
+            {
+                "text": f"Latest: {latest_date:%Y-%m-%d}\nClose: {latest_close:.2f}",
+                "color": "#2ca02c",
+            },
         ],
     )
 
@@ -206,6 +221,8 @@ def plot_market_grid(
     output_dir: Path,
     ncols: int = 3,
     name_map: dict[str, str] | None = None,
+    low_days: int = 20,
+    high_days: int = 20,
 ) -> Path | None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -233,30 +250,35 @@ def plot_market_grid(
         latest_ts = latest_row["ts"]
         latest_close = float(latest_row["close"])
 
-        cutoff_20d = latest_ts - timedelta(days=20)
-        recent_20 = symbol_df[symbol_df["ts"] >= cutoff_20d].copy()
-        if recent_20.empty:
-            recent_20 = symbol_df.tail(20).copy()
+        low_cutoff = latest_ts - timedelta(days=low_days)
+        recent_low = symbol_df[symbol_df["ts"] >= low_cutoff].copy()
+        if recent_low.empty:
+            recent_low = symbol_df.tail(max(1, low_days)).copy()
 
-        low_idx = recent_20["close"].idxmin()
-        low_row = recent_20.loc[low_idx]
+        low_idx = recent_low["close"].idxmin()
+        low_row = recent_low.loc[low_idx]
         low_ts = low_row["ts"]
         low_close = float(low_row["close"])
 
-        high_idx = recent_20["close"].idxmax()
-        high_row = recent_20.loc[high_idx]
+        high_cutoff = latest_ts - timedelta(days=high_days)
+        recent_high = symbol_df[symbol_df["ts"] >= high_cutoff].copy()
+        if recent_high.empty:
+            recent_high = symbol_df.tail(max(1, high_days)).copy()
+
+        high_idx = recent_high["close"].idxmax()
+        high_row = recent_high.loc[high_idx]
         high_ts = high_row["ts"]
         high_close = float(high_row["close"])
 
-        is_latest_20d_low = latest_close <= low_close
-        latest_color = "#d62728" if is_latest_20d_low else "#2ca02c"
+        is_latest_low = latest_close <= low_close
+        latest_color = "#d62728" if is_latest_low else "#2ca02c"
 
         ax.scatter([low_ts], [low_close], color="#ff7f0e", s=70, zorder=6)
         ax.scatter([high_ts], [high_close], color="#9467bd", s=70, zorder=6)
         ax.scatter([latest_ts], [latest_close], color=latest_color, s=85, zorder=7)
-        ax.axvline(cutoff_20d, color="#6c757d", linestyle="--", linewidth=1.4)
+        ax.axvline(low_cutoff, color="#6c757d", linestyle="--", linewidth=1.4)
 
-        low_flag = "LOW20" if is_latest_20d_low else ""
+        low_flag = f"LOW{low_days}" if is_latest_low else ""
         display_name = ""
         if name_map:
             display_name = name_map.get(symbol, "").strip()
