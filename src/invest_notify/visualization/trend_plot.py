@@ -94,7 +94,13 @@ def plot_price(df: pd.DataFrame, symbol: str, output_dir: Path, days_back: int =
     low_date = low_row["ts"]
     low_close = float(low_row["close"])
 
+    high_idx = recent_20_df["close"].idxmax()
+    high_row = recent_20_df.loc[high_idx]
+    high_date = high_row["ts"]
+    high_close = float(high_row["close"])
+
     ax.scatter([low_date], [low_close], color="#d62728", s=55, zorder=5)
+    ax.scatter([high_date], [high_close], color="#9467bd", s=55, zorder=5)
     ax.scatter([latest_date], [latest_close], color="#2ca02c", s=55, zorder=5)
 
     # ax.annotate(
@@ -158,10 +164,15 @@ def plot_price(df: pd.DataFrame, symbol: str, output_dir: Path, days_back: int =
             current_y += box_height_fraction + y_padding
 
     # 使用方式
-    _add_corner_annotations(ax, [
-        {"text": f"20D Low: {low_date:%Y-%m-%d}\nClose: {low_close:.2f}", "color": "#d62728"},
-        {"text": f"Latest: {latest_date:%Y-%m-%d}\nClose: {latest_close:.2f}", "color": "#2ca02c"},
-    ])
+    lp, hp, np = low_close, high_close, latest_close
+    _add_corner_annotations(
+        ax,
+        [
+            {"text": f"20D Low: {low_date:%Y-%m-%d}\nClose: {lp:.2f}", "color": "#d62728"},
+            {"text": f"20D High: {high_date:%Y-%m-%d}\nClose: {hp:.2f}", "color": "#9467bd"},
+            {"text": f"Latest: {latest_date:%Y-%m-%d}\nClose: {np:.2f}", "color": "#2ca02c"},
+        ],
+    )
 
     ax.set_title(f"{symbol} Close Price")
     ax.set_xlabel("Date")
@@ -217,10 +228,16 @@ def plot_market_grid(
         low_ts = low_row["ts"]
         low_close = float(low_row["close"])
 
+        high_idx = recent_20["close"].idxmax()
+        high_row = recent_20.loc[high_idx]
+        high_ts = high_row["ts"]
+        high_close = float(high_row["close"])
+
         is_latest_20d_low = latest_close <= low_close
         latest_color = "#d62728" if is_latest_20d_low else "#2ca02c"
 
         ax.scatter([low_ts], [low_close], color="#ff7f0e", s=70, zorder=6)
+        ax.scatter([high_ts], [high_close], color="#9467bd", s=70, zorder=6)
         ax.scatter([latest_ts], [latest_close], color=latest_color, s=85, zorder=7)
 
         low_flag = "LOW20" if is_latest_20d_low else ""
