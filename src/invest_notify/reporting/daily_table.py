@@ -90,15 +90,15 @@ def _render_section(date_text: str, rows: list[DailyRow]) -> str:
     header = [
         f"## {date_text}",
         "",
-        "| 市場 | 股票 | 股票名稱 | 當天收盤價 | 20天最低價 | 當天是否更低 | 當天是否更高 |",
-        "|---|---|---|---:|---:|:---:|:---:|",
+        "| 市場 | 股票 | 股票名稱 | 當天收盤價 | 20天最低價 | 20天最高價 | 建議賣出 | 建議買入 |",
+        "|---|---|---|---:|---:|---:|:---:|:---:|",
     ]
     body = []
     for row in rows:
-        checked = "✅" if row.is_lower_or_equal_20d_low else ""
-        checked_high = "✅" if row.is_higher_or_equal_20d_high else ""
+        sell_flag = "✅" if row.is_lower_or_equal_20d_low else ""
+        buy_flag = "✅" if row.is_higher_or_equal_20d_high else ""
         body.append(
-            f"| {row.market} | {row.symbol} | {row.symbol_name} | {row.close:.2f} | {row.low_20d:.2f} | {checked} | {checked_high} |"  # noqa: E501
+            f"| {row.market} | {row.symbol} | {row.symbol_name} | {row.close:.2f} | {row.low_20d:.2f} | {row.high_20d:.2f} | {sell_flag} | {buy_flag} |"  # noqa: E501
         )
     return "\n".join(header + body) + "\n"
 
