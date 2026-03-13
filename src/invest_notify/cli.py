@@ -13,7 +13,7 @@ from invest_notify.data_source.tw_stock import (
 from invest_notify.data_source.us_stock import fetch_us_recent_closes
 from invest_notify.reporting.daily_table import write_daily_snapshot_table
 from invest_notify.scheduler import run_interval_job
-from invest_notify.settings import load_app_settings, load_stock_settings
+from invest_notify.settings import load_app_settings, load_stock_name_map, load_stock_settings
 from invest_notify.storage.reader import filter_since, read_prices
 from invest_notify.storage.sqlite_store import upsert_records
 from invest_notify.storage.writer import replace_records, save_curated
@@ -66,6 +66,7 @@ def run_fetch() -> None:
 def run_plot() -> None:
     app = load_app_settings()
     stocks = load_stock_settings()
+    name_map = load_stock_name_map()
 
     raw_df = read_prices(app.data.raw_file)
     since = three_months_ago(now_utc())
@@ -80,7 +81,12 @@ def run_plot() -> None:
         return
 
     for symbol in sorted(trend_df["symbol"].astype(str).unique().tolist()):
-        symbol_path = plot_price(trend_df, symbol=symbol, output_dir=app.data.plot_dir)
+        symbol_path = plot_price(
+            trend_df,
+            symbol=symbol,
+            output_dir=app.data.plot_dir,
+            name_map=name_map,
+        )
         LOGGER.info("Per-stock plot generated: %s", symbol_path)
 
     market_groups = {
@@ -96,6 +102,7 @@ def run_plot() -> None:
             market_name=market_name,
             output_dir=app.data.plot_dir,
             ncols=3,
+            name_map=name_map,
         )
         if grid_path is not None:
             LOGGER.info("Market grid generated: %s", grid_path)
@@ -114,6 +121,7 @@ def run_plot() -> None:
         trend_df=trend_df,
         market_map=market_map,
         table_dir=app.data.table_dir,
+        name_map=name_map,
     )
     if table_path is not None:
         LOGGER.info("Daily table updated: %s", table_path)

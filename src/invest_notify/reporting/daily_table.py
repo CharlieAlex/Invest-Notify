@@ -12,6 +12,7 @@ import pandas as pd
 class DailyRow:
     market: str
     symbol: str
+    symbol_name: str
     trade_date: datetime
     close: float
     low_20d: float
@@ -24,11 +25,12 @@ def write_daily_snapshot_table(
     trend_df: pd.DataFrame,
     market_map: dict[str, str],
     table_dir: Path,
+    name_map: dict[str, str] | None = None,
 ) -> Path | None:
     if trend_df.empty:
         return None
 
-    rows = _build_daily_rows(trend_df, market_map)
+    rows = _build_daily_rows(trend_df, market_map, name_map)
     if not rows:
         return None
 
@@ -41,7 +43,11 @@ def write_daily_snapshot_table(
     return month_file
 
 
-def _build_daily_rows(trend_df: pd.DataFrame, market_map: dict[str, str]) -> list[DailyRow]:
+def _build_daily_rows(
+    trend_df: pd.DataFrame,
+    market_map: dict[str, str],
+    name_map: dict[str, str] | None = None,
+) -> list[DailyRow]:
     df = trend_df.copy()
     df["ts"] = pd.to_datetime(df["ts"], errors="coerce")
     df = df.dropna(subset=["ts", "close", "symbol"]).sort_values(["symbol", "ts"])
@@ -67,6 +73,7 @@ def _build_daily_rows(trend_df: pd.DataFrame, market_map: dict[str, str]) -> lis
             DailyRow(
                 market=market_map.get(symbol, "unknown"),
                 symbol=symbol,
+                symbol_name=name_map.get(symbol, "").strip() if name_map else "",
                 trade_date=latest_ts,
                 close=latest_close,
                 low_20d=low_20d,
@@ -83,15 +90,15 @@ def _render_section(date_text: str, rows: list[DailyRow]) -> str:
     header = [
         f"## {date_text}",
         "",
-        "| 市場 | 股票 | 當天收盤價 | 20天最低價 | 當天是否更低 | 當天是否更高 |",
-        "|---|---|---:|---:|:---:|:---:|",
+        "| 市場 | 股票 | 股票名稱 | 當天收盤價 | 20天最低價 | 當天是否更低 | 當天是否更高 |",
+        "|---|---|---|---:|---:|:---:|:---:|",
     ]
     body = []
     for row in rows:
         checked = "✅" if row.is_lower_or_equal_20d_low else ""
         checked_high = "✅" if row.is_higher_or_equal_20d_high else ""
         body.append(
-            f"| {row.market} | {row.symbol} | {row.close:.2f} | {row.low_20d:.2f} | {checked} | {checked_high} |"  # noqa: E501
+            f"| {row.market} | {row.symbol} | {row.symbol_name} | {row.close:.2f} | {row.low_20d:.2f} | {checked} | {checked_high} |"  # noqa: E501
         )
     return "\n".join(header + body) + "\n"
 

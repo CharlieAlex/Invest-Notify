@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 from pathlib import Path
 
 import yaml
@@ -76,6 +77,13 @@ def _normalize_us_symbol(value: str) -> str:
     return str(value).strip().upper()
 
 
+def _normalize_any_symbol(value: str) -> str:
+    raw = str(value).strip()
+    if raw.isdigit():
+        return _normalize_tw_symbol(raw)
+    return _normalize_us_symbol(raw)
+
+
 def _load_yaml(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:
         content = yaml.safe_load(f) or {}
@@ -100,3 +108,51 @@ def load_stock_settings(config_path: str | Path = "config/stocks.yaml") -> Stock
         return StockSettings.model_validate(data)
     except ValidationError as exc:
         raise ValueError(f"Invalid stock settings in {path}: {exc}") from exc
+
+
+def load_stock_name_map(config_path: str | Path = "config/stock.csv") -> dict[str, str]:
+    path = Path(config_path)
+    if not path.exists():
+        return {}
+
+    rows: list[list[str]] = []
+    with path.open("r", encoding="utf-8", newline="") as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if not row or all(not str(cell).strip() for cell in row):
+                continue
+            rows.append([str(cell).strip() for cell in row])
+
+    if not rows:
+        return {}
+
+    header = [cell.lower() for cell in rows[0]]
+    symbol_idx = 0
+    name_idx = 1
+    if any(
+        key in header
+        for key in {"symbol", "code", "ticker", "代碼", "股票代碼", "id"}
+    ):
+        # Use header mapping if present.
+        header_map = {cell: idx for idx, cell in enumerate(header)}
+        for key in ("symbol", "code", "ticker", "代碼", "股票代碼", "id"):
+            if key in header_map:
+                symbol_idx = header_map[key]
+                break
+        for key in ("name", "名稱", "股票名稱"):
+            if key in header_map:
+                name_idx = header_map[key]
+                break
+        data_rows = rows[1:]
+    else:
+        data_rows = rows
+
+    name_map: dict[str, str] = {}
+    for row in data_rows:
+        if len(row) <= max(symbol_idx, name_idx):
+            continue
+        symbol = _normalize_any_symbol(row[symbol_idx])
+        name = row[name_idx].strip()
+        if symbol:
+            name_map[symbol] = name
+    return name_map

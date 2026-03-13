@@ -11,6 +11,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from matplotlib import rcParams
+
+sns.set_theme(style="whitegrid")
+rcParams['font.sans-serif'] = ['Arial Unicode MS', 'Noto Sans CJK TC', 'Noto Sans CJK JP']
+rcParams['axes.unicode_minus'] = True
 
 
 def _plot_empty(output_path: Path, message: str) -> Path:
@@ -29,7 +34,6 @@ def plot_trends(df: pd.DataFrame, output_dir: Path, filename: str = "trend_3m.pn
     if df.empty:
         return _plot_empty(output_path, "No data to plot")
 
-    sns.set_theme(style="whitegrid")
     fig, ax = plt.subplots(figsize=(12, 6))
 
     sns.lineplot(data=df, x="ts", y="close", hue="symbol", ax=ax, linewidth=1.6)
@@ -54,7 +58,13 @@ def plot_trends(df: pd.DataFrame, output_dir: Path, filename: str = "trend_3m.pn
     return output_path
 
 
-def plot_price(df: pd.DataFrame, symbol: str, output_dir: Path, days_back: int = 60) -> Path:
+def plot_price(
+    df: pd.DataFrame,
+    symbol: str,
+    output_dir: Path,
+    days_back: int = 60,
+    name_map: dict[str, str] | None = None,
+) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"price_{symbol}.png"
 
@@ -73,7 +83,6 @@ def plot_price(df: pd.DataFrame, symbol: str, output_dir: Path, days_back: int =
         if symbol_df.empty:
             return _plot_empty(output_path, f"No data within last {days_back} days for {symbol}")
 
-    sns.set_theme(style="ticks")
     fig, ax = plt.subplots(figsize=(12, 6))
     sns.scatterplot(data=symbol_df, x="ts", y="close", ax=ax, color="#1f77b4")
     sns.lineplot(data=symbol_df, x="ts", y="close", ax=ax, color="#1f77b4", linewidth=2.0)
@@ -174,7 +183,13 @@ def plot_price(df: pd.DataFrame, symbol: str, output_dir: Path, days_back: int =
         ],
     )
 
-    ax.set_title(f"{symbol} Close Price")
+    display_name = ""
+    if name_map:
+        display_name = name_map.get(symbol, "").strip()
+    if display_name:
+        ax.set_title(f"{symbol} {display_name} Close Price")
+    else:
+        ax.set_title(f"{symbol} Close Price")
     ax.set_xlabel("Date")
     ax.set_ylabel("Close")
     ax.grid(True, alpha=0.25)
@@ -190,6 +205,7 @@ def plot_market_grid(
     market_name: str,
     output_dir: Path,
     ncols: int = 3,
+    name_map: dict[str, str] | None = None,
 ) -> Path | None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -200,7 +216,6 @@ def plot_market_grid(
     nrows = max(1, math.ceil(len(market_symbols) / ncols))
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(18, 4.8 * nrows))
     axes_list = list(axes.flatten()) if hasattr(axes, "flatten") else [axes]
-    sns.set_theme(style="whitegrid")
 
     for idx, symbol in enumerate(market_symbols):
         ax = axes_list[idx]
@@ -241,7 +256,15 @@ def plot_market_grid(
         ax.scatter([latest_ts], [latest_close], color=latest_color, s=85, zorder=7)
 
         low_flag = "LOW20" if is_latest_20d_low else ""
-        ax.set_title(f"{symbol} {low_flag}".strip())
+        display_name = ""
+        if name_map:
+            display_name = name_map.get(symbol, "").strip()
+        title_parts = [symbol]
+        if display_name:
+            title_parts.append(display_name)
+        if low_flag:
+            title_parts.append(low_flag)
+        ax.set_title(" ".join(title_parts))
         ax.set_xlabel("Date")
         ax.set_ylabel("Close")
         ax.tick_params(axis="x", rotation=30)
