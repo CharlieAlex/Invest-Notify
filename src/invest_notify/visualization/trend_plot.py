@@ -254,6 +254,7 @@ def plot_market_grid(
         ax.scatter([low_ts], [low_close], color="#ff7f0e", s=70, zorder=6)
         ax.scatter([high_ts], [high_close], color="#9467bd", s=70, zorder=6)
         ax.scatter([latest_ts], [latest_close], color=latest_color, s=85, zorder=7)
+        ax.axvline(cutoff_20d, color="#6c757d", linestyle="--", linewidth=1.4)
 
         low_flag = "LOW20" if is_latest_20d_low else ""
         display_name = ""
