@@ -12,3 +12,4 @@ data/plots/*.png
 data/tables/*.md
 **/.DS_Store
 config/stocks.yaml
+config/stock.csv
