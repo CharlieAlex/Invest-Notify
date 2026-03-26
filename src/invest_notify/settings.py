@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import os
 from pathlib import Path
 
 import yaml
@@ -28,6 +29,12 @@ class WindowSettings(BaseModel):
     high_days: int = Field(default=20, ge=1)
 
 
+class LineSettings(BaseModel):
+    channel_secret: str
+    access_token: str
+    user_id: str
+
+
 class AppSettings(BaseModel):
     app_name: str
     log_level: str
@@ -35,6 +42,7 @@ class AppSettings(BaseModel):
     source: SourceSettings
     scheduler: SchedulerSettings
     window: WindowSettings
+    line: LineSettings | None = None
 
 
 class StockSettings(BaseModel):
@@ -101,6 +109,29 @@ def _load_yaml(path: Path) -> dict:
 def load_app_settings(config_path: str | Path = "config/app.yaml") -> AppSettings:
     path = Path(config_path)
     data = _load_yaml(path)
+
+    # Manually load .env if it exists
+    env_path = Path(".env")
+    if env_path.exists():
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
+
+    # Load Line settings from environment and id.md if available
+    line_secret = os.getenv("CHANNEL_SECRET")
+    line_token = os.getenv("ACCESS_TOKEN")
+    user_id = 'U1fe3c5e0fa911a447738a7387a5fcc95'
+
+    if line_secret and line_token and user_id:
+        data["line"] = {
+            "channel_secret": line_secret,
+            "access_token": line_token,
+            "user_id": user_id,
+        }
+
     try:
         return AppSettings.model_validate(data)
     except ValidationError as exc:

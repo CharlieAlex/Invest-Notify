@@ -11,6 +11,7 @@ from invest_notify.data_source.tw_stock import (
     fetch_twse_recent_closes,
 )
 from invest_notify.data_source.us_stock import fetch_us_recent_closes
+from invest_notify.notifications.line import LineNotifier, get_latest_table_text
 from invest_notify.reporting.daily_table import write_daily_snapshot_table
 from invest_notify.scheduler import run_interval_job
 from invest_notify.settings import load_app_settings, load_stock_name_map, load_stock_settings
@@ -135,9 +136,25 @@ def run_plot() -> None:
         LOGGER.info("Daily table updated: %s", table_path)
 
 
+def run_notify() -> None:
+    app = load_app_settings()
+    if not app.line:
+        LOGGER.warning(
+            "Line settings (CHANNEL_SECRET, ACCESS_TOKEN, LINE_USER_ID) are not configured."
+        )
+        return
+
+    latest_text = get_latest_table_text(app.data.table_dir)
+    plot_path = app.data.plot_dir / "market_twse.png"
+
+    notifier = LineNotifier(app.line)
+    notifier.notify(text=latest_text, image_path=plot_path)
+
+
 def run_once() -> None:
     run_fetch()
     run_plot()
+    run_notify()
 
 
 def run_scheduler() -> None:
@@ -149,7 +166,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Invest Notify")
     parser.add_argument(
         "command",
-        choices=["fetch", "plot", "run-once", "run-scheduler"],
+        choices=["fetch", "plot", "notify", "run-once", "run-scheduler"],
         help="Command to execute",
     )
     return parser
@@ -166,6 +183,8 @@ def main() -> None:
         run_fetch()
     elif args.command == "plot":
         run_plot()
+    elif args.command == "notify":
+        run_notify()
     elif args.command == "run-once":
         run_once()
     elif args.command == "run-scheduler":
