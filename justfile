@@ -4,16 +4,16 @@ init:
 	uv sync --extra dev
 
 fetch:
-	{{PYTHON}} -m invest_notify.main fetch
+	{{PYTHON}} -m main fetch
 
 plot:
-	{{PYTHON}} -m invest_notify.main plot
+	{{PYTHON}} -m main plot
 
 notify:
-	{{PYTHON}} -m invest_notify.main notify
+	{{PYTHON}} -m main notify
 
 run:
-	{{PYTHON}} -m invest_notify.main run-scheduler
+	{{PYTHON}} -m main run-scheduler
 
 test:
 	uv run pytest -q
