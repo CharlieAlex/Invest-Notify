@@ -11,3 +11,8 @@ esb_stock:
 nasdaq_stock:
   - "QQQ"
   - "SPY"
+
+line_notification:
+  - "0050"
+  - "2330"
+  - "QQQ"

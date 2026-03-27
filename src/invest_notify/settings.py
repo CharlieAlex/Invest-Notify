@@ -51,6 +51,7 @@ class StockSettings(BaseModel):
     esb_stock: list[str] = Field(default_factory=list)
     nasdaq_stock: list[str] = Field(default_factory=list)
     stocks: list[str] = Field(default_factory=list)
+    line_notification: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def normalize_and_validate(self) -> StockSettings:
@@ -68,6 +69,7 @@ class StockSettings(BaseModel):
         self.tpex_stock = [_normalize_tw_symbol(s) for s in self.tpex_stock]
         self.esb_stock = [_normalize_tw_symbol(s) for s in self.esb_stock]
         self.nasdaq_stock = [_normalize_us_symbol(s) for s in self.nasdaq_stock]
+        self.line_notification = [_normalize_any_symbol(s) for s in self.line_notification]
 
         total = (
             len(self.twse_stock)

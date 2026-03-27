@@ -223,6 +223,8 @@ def plot_market_grid(
     name_map: dict[str, str] | None = None,
     low_days: int = 20,
     high_days: int = 20,
+    title: str | None = None,
+    output_filename: str | None = None,
 ) -> Path | None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -295,9 +297,13 @@ def plot_market_grid(
     for idx in range(len(market_symbols), len(axes_list)):
         axes_list[idx].set_axis_off()
 
-    fig.suptitle(f"{market_name.upper()} - 3M Close Price Grid", fontsize=16)
+    _title = title if title is not None else f"{market_name.upper()} - 3M Close Price Grid"
+    _filename = output_filename if output_filename is not None else f"market_{market_name}.png"
+    fig.suptitle(_title, fontsize=16)
     fig.tight_layout(rect=[0, 0, 1, 0.97])
-    output_path = output_dir / f"market_{market_name}.png"
+    output_path = output_dir / _filename
     fig.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     return output_path
+
+

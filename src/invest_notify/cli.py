@@ -23,7 +23,11 @@ from invest_notify.storage.sqlite_store import upsert_records
 from invest_notify.storage.writer import replace_records, save_curated
 from invest_notify.utils.logger import setup_logger
 from invest_notify.utils.timeutil import now_utc, three_months_ago
-from invest_notify.visualization.trend_plot import plot_market_grid, plot_price, plot_trends
+from invest_notify.visualization.trend_plot import (
+    plot_market_grid,
+    plot_price,
+    plot_trends,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -138,6 +142,22 @@ def run_plot() -> None:
     if table_path is not None:
         LOGGER.info("Daily table updated: %s", table_path)
 
+    if stocks.line_notification:
+        ln_path = plot_market_grid(
+            trend_df,
+            symbols=stocks.line_notification,
+            market_name="line_notification",
+            output_dir=app.data.plot_dir,
+            ncols=3,
+            name_map=name_map,
+            low_days=low_days,
+            high_days=high_days,
+            title="LINE Notification - Close Price Grid",
+            output_filename="line_notification.png",
+        )
+        if ln_path is not None:
+            LOGGER.info("LINE notification plot generated: %s", ln_path)
+
 
 def run_notify() -> None:
     app = load_app_settings()
@@ -149,7 +169,7 @@ def run_notify() -> None:
 
     latest_text = get_latest_table_text(app.data.table_dir)
     latest_text = markdown_table_to_line_friendly(latest_text)
-    plot_path = app.data.plot_dir / "market_twse.png"
+    plot_path = app.data.plot_dir / "line_notification.png"
 
     notifier = LineNotifier(app.line)
     notifier.notify(text=latest_text, image_path=plot_path)
