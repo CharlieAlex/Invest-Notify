@@ -5,7 +5,6 @@ description = "Track Taiwan stock prices periodically and plot 3-month trends"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-  "apscheduler>=3.10.4",
   "matplotlib>=3.8.0",
   "pandas>=2.2.0",
   "pydantic>=2.6.0",

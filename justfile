@@ -12,9 +12,6 @@ plot:
 notify:
 	{{PYTHON}} -m main notify
 
-run:
-	{{PYTHON}} -m main run-scheduler
-
 test:
 	uv run pytest -q
 

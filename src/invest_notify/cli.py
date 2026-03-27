@@ -16,7 +16,6 @@ from invest_notify.reporting.daily_table import (
     markdown_table_to_line_friendly,
     write_daily_snapshot_table,
 )
-from invest_notify.scheduler import run_interval_job
 from invest_notify.settings import load_app_settings, load_stock_name_map, load_stock_settings
 from invest_notify.storage.reader import filter_since, read_prices
 from invest_notify.storage.sqlite_store import upsert_records
@@ -181,16 +180,11 @@ def run_once() -> None:
     run_notify()
 
 
-def run_scheduler() -> None:
-    app = load_app_settings()
-    run_interval_job(run_once, interval_minutes=app.scheduler.interval_minutes)
-
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Invest Notify")
     parser.add_argument(
         "command",
-        choices=["fetch", "plot", "notify", "run-once", "run-scheduler"],
+        choices=["fetch", "plot", "notify", "run-once"],
         help="Command to execute",
     )
     return parser
@@ -211,7 +205,5 @@ def main() -> None:
         run_notify()
     elif args.command == "run-once":
         run_once()
-    elif args.command == "run-scheduler":
-        run_scheduler()
     else:
         parser.print_help()

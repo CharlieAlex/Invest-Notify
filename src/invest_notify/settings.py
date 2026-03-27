@@ -20,10 +20,6 @@ class SourceSettings(BaseModel):
     provider: str = Field(pattern="^(mock|twse|live)$")
 
 
-class SchedulerSettings(BaseModel):
-    interval_minutes: int = Field(ge=1)
-
-
 class WindowSettings(BaseModel):
     low_days: int = Field(default=20, ge=1)
     high_days: int = Field(default=20, ge=1)
@@ -40,7 +36,6 @@ class AppSettings(BaseModel):
     log_level: str
     data: DataSettings
     source: SourceSettings
-    scheduler: SchedulerSettings
     window: WindowSettings
     line: LineSettings | None = None
 

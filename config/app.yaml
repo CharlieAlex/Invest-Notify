@@ -11,9 +11,6 @@ data:
 source:
   provider: twse   # mock | twse | live
 
-scheduler:
-  interval_minutes: 15
-
 window:
   low_days: 20
   high_days: 10
