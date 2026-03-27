@@ -12,7 +12,10 @@ from invest_notify.data_source.tw_stock import (
 )
 from invest_notify.data_source.us_stock import fetch_us_recent_closes
 from invest_notify.notifications.line import LineNotifier, get_latest_table_text
-from invest_notify.reporting.daily_table import write_daily_snapshot_table
+from invest_notify.reporting.daily_table import (
+    markdown_table_to_line_friendly,
+    write_daily_snapshot_table,
+)
 from invest_notify.scheduler import run_interval_job
 from invest_notify.settings import load_app_settings, load_stock_name_map, load_stock_settings
 from invest_notify.storage.reader import filter_since, read_prices
@@ -145,6 +148,7 @@ def run_notify() -> None:
         return
 
     latest_text = get_latest_table_text(app.data.table_dir)
+    latest_text = markdown_table_to_line_friendly(latest_text)
     plot_path = app.data.plot_dir / "market_twse.png"
 
     notifier = LineNotifier(app.line)

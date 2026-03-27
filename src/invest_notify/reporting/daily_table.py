@@ -127,3 +127,66 @@ def _upsert_section(month_file: Path, date_text: str, section_text: str) -> None
         updated = content + section_text + "\n"
 
     month_file.write_text(updated, encoding="utf-8")
+
+
+def markdown_table_to_line_friendly(text: str) -> str:
+    lines = text.strip().splitlines()
+
+    # 先找出「表格開始的那一行：有 | 市場 | 股票 | ...」
+    table_start_idx = None
+    header_line = None
+    for i, line in enumerate(lines):
+        if "市場" in line and "|" in line:
+            table_start_idx = i
+            header_line = line
+            break
+
+    if table_start_idx is None:
+        # 沒有找到表格，直接回傳原始文字
+        return text.strip()
+
+    # 前面不是表格的部分，就當成標題 / header 保留下來
+    header_text = "\n".join(lines[:table_start_idx]).strip()
+    table_lines = lines[table_start_idx:]
+
+    # 從表格行中取出欄位名稱（header）
+    header = [x.strip() for x in header_line.split("|") if x.strip()]
+    keys = header
+
+    # 解析資料行
+    data_lines = [
+        ln for ln in table_lines
+        if "|" in ln and "市場" not in ln and "---" not in ln
+    ]
+    records = []
+    for line in data_lines:
+        values = [x.strip() for x in line.split("|") if x.strip()]
+        row = dict(zip(keys, values, strict=False))
+        records.append(row)
+
+    # 轉成 LINE 友善格式
+    result_lines = []
+    for r in records:
+        high, low, now = float(r['10天最高價']), float(r['20天最低價']), float(r['當天收盤價'])
+
+        if low < now and now < high:
+            continue
+
+        result_lines.append(f"市場 : {r['市場']}")
+        result_lines.append(f"股票 : {r['股票']}")
+        result_lines.append(f"股票名稱 : {r['股票名稱']}")
+        result_lines.append(f"當天收盤價 : {now}")
+        result_lines.append(f"20天最低價 : {low}")
+        result_lines.append(f"10天最高價 : {high}")
+        if now <= low:
+            result_lines.append("建議賣出!!")
+        if now >= high:
+            result_lines.append("建議買入!!")
+        result_lines.append("")
+
+    # 加上原始標題
+    line_friendly_table = "\n".join(result_lines).strip()
+    if header_text:
+        return f"{header_text}\n\n{line_friendly_table}"
+    else:
+        return line_friendly_table
