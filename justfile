@@ -20,3 +20,6 @@ lint:
 
 format:
 	uv run ruff check . --fix
+
+run:
+	just fetch && just plot && just notify >> ~/invest_notify_cron.log 2>&1
