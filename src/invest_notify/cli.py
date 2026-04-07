@@ -161,7 +161,7 @@ def run_notify() -> None:
     app = load_app_settings()
     if not app.line:
         LOGGER.warning(
-            "Line settings (CHANNEL_SECRET, ACCESS_TOKEN, LINE_USER_ID) are not configured."
+            "Line settings (CHANNEL_SECRET, ACCESS_TOKEN, LINE_USER_IDS) are not configured."
         )
         return
 

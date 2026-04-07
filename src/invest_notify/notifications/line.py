@@ -39,21 +39,29 @@ class LineNotifier:
             else:
                 LOGGER.warning("Image upload failed, only text will be sent.")
 
-        payload = {
-            "to": self.settings.user_id,
-            "messages": messages,
-        }
+        success = True
+        for user_id in self.settings.user_id:
+            payload = {
+                "to": user_id,
+                "messages": messages,
+            }
 
-        try:
-            response = requests.post(self.push_url, headers=self.headers, json=payload, timeout=15)
-            response.raise_for_status()
-            LOGGER.info("Line notification sent successfully.")
-            return True
-        except requests.RequestException as exc:
-            LOGGER.error("Failed to send Line notification: %s", exc)
-            if hasattr(exc, "response") and exc.response is not None:
-                LOGGER.error("Response body: %s", exc.response.text)
-            return False
+            try:
+                response = requests.post(
+                    self.push_url,
+                    headers=self.headers,
+                    json=payload,
+                    timeout=15,
+                )
+                response.raise_for_status()
+                LOGGER.info("Line notification sent successfully to user %s.", user_id)
+            except requests.RequestException as exc:
+                success = False
+                LOGGER.error("Failed to send Line notification to user %s: %s", user_id, exc)
+                if hasattr(exc, "response") and exc.response is not None:
+                    LOGGER.error("Response body: %s", exc.response.text)
+
+        return success
 
     def _upload_image(self, image_path: Path) -> str | None:
         """Upload image to a public hosting service (catbox.moe) to get an HTTPS URL."""

@@ -28,7 +28,7 @@ class WindowSettings(BaseModel):
 class LineSettings(BaseModel):
     channel_secret: str
     access_token: str
-    user_id: str
+    user_id: list[str]
 
 
 class AppSettings(BaseModel):
@@ -120,7 +120,11 @@ def load_app_settings(config_path: str | Path = "config/app.yaml") -> AppSetting
     # Load Line settings from environment and id.md if available
     line_secret = os.getenv("CHANNEL_SECRET")
     line_token = os.getenv("ACCESS_TOKEN")
-    user_id = 'U1fe3c5e0fa911a447738a7387a5fcc95'
+    line_user_ids = os.getenv("LINE_USER_IDS")
+
+    user_id = []
+    if line_user_ids:
+        user_id = [value.strip() for value in line_user_ids.split(",") if value.strip()]
 
     if line_secret and line_token and user_id:
         data["line"] = {
