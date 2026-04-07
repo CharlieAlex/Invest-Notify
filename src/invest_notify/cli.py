@@ -20,7 +20,6 @@ from invest_notify.settings import load_app_settings, load_stock_name_map, load_
 from invest_notify.storage.reader import filter_since, read_prices
 from invest_notify.storage.sqlite_store import upsert_records
 from invest_notify.storage.writer import replace_records, save_curated
-from invest_notify.utils.logger import setup_logger
 from invest_notify.utils.timeutil import now_utc, three_months_ago
 from invest_notify.visualization.trend_plot import (
     plot_market_grid,
@@ -188,22 +187,3 @@ def build_parser() -> argparse.ArgumentParser:
         help="Command to execute",
     )
     return parser
-
-
-def main() -> None:
-    app = load_app_settings()
-    setup_logger(level=app.log_level)
-
-    parser = build_parser()
-    args = parser.parse_args()
-
-    if args.command == "fetch":
-        run_fetch()
-    elif args.command == "plot":
-        run_plot()
-    elif args.command == "notify":
-        run_notify()
-    elif args.command == "run-once":
-        run_once()
-    else:
-        parser.print_help()
