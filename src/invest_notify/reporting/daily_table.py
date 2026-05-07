@@ -167,7 +167,11 @@ def markdown_table_to_line_friendly(text: str) -> str:
     # 轉成 LINE 友善格式
     result_lines = []
     for r in records:
-        high, low, now = float(r['10天最高價']), float(r['20天最低價']), float(r['當天收盤價'])
+        try:
+            high, low, now = float(r['10天最高價']), float(r['20天最低價']), float(r['當天收盤價'])
+        except KeyError:
+            print(f"檢查是否沒有登記股票代號至stock.csv: {r}")
+            continue
 
         if low < now and now < high:
             continue
